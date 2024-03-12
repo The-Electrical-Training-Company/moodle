@@ -284,6 +284,27 @@ $string['dragtostart'] = 'To the start';
 $string['duplicateresponse'] = 'This submission has been ignored because you gave an equivalent answer earlier.';
 $string['eachattemptbuildsonthelast'] = 'Each attempt builds on the last';
 $string['eachattemptbuildsonthelast_help'] = 'If multiple attempts are allowed and this setting is enabled, each new quiz attempt will contain the results of the previous attempt. This allows a quiz to be completed over several attempts.';
+/* Corecode */
+$string['configcustomgrading'] = 'Turns on custom grading.';
+$string['customgrading'] = 'Custom quiz Grading';
+$string['customgrading_help'] = 'Turns on custom quiz grading.';
+$string['configdisablealreadycorrectquestions'] = 'Only allow completion of each question once.';
+$string['disablealreadycorrectquestions'] = 'Disable questions already correct.';
+$string['disablealreadycorrectquestions_help'] = 'Will stop user\'s from having to reattempt questions they have answered correctly in previous attempts.';
+$string['configdisablealreadycorrectquestions_showcorrect'] = 'Show correct answer with "Disable questions already correct".';
+$string['disablealreadycorrectquestions_showcorrect'] = 'Show correct answer with "Disable questions already correct".';
+$string['disablealreadycorrectquestions_showcorrect_help'] = 'Will show the users the correct question answer for disabled questions.';
+/* AC240304 */
+$string['configdisableshowcorrectforall'] = 'Prevents all users from seeing specific question marks.';
+$string['disableshowcorrectforall'] = 'Disable "Whether correct" for all users';
+$string['disableshowcorrectforall_help'] = 'Prevents all users from seeing specific question marks. For example the ticks for each choice in a multiple choice question';
+/* /AC240304 */
+$string['configdisableshowcorrectforstudent'] = 'Prevents students from seeing specific question marks.';
+$string['disableshowcorrectforstudent'] = 'Disable "Whether correct" for students';
+$string['disableshowcorrectforstudent_help'] = 'Prevents students from seeing specific question marks. For example the ticks for each choice in a multiple choice question';
+$string['previouslycompleted'] = "Previously Completed";
+$string['alreadyansweredcorrectly'] = "Already answered correctly";
+/* /Corecode */
 $string['editcategories'] = 'Edit categories';
 $string['editcategory'] = 'Edit category';
 $string['editcatquestions'] = 'Edit category questions';

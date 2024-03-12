@@ -700,6 +700,9 @@ class mod_quiz_renderer extends plugin_renderer_base {
 
         // Get the summary info for each question.
         $slots = $attemptobj->get_slots();
+        /* Corecode */
+        $lastattempt = $attemptobj->get_last_complete_attempt();
+        /* /Corecode */
         foreach ($slots as $slot) {
             // Add a section headings if we need one here.
             $heading = $attemptobj->get_heading_before_slot($slot);
@@ -733,6 +736,21 @@ class mod_quiz_renderer extends plugin_renderer_base {
                 $flag = html_writer::empty_tag('img', array('src' => $this->image_url('i/flagged'),
                         'alt' => get_string('flagged', 'question'), 'class' => 'questionflag icon-post'));
             }
+            /* Corecode */
+            if (!empty($lastattempt) && isset($lastattempt[$slot])) {
+                $qstatus = get_string('previouslycompleted', 'quiz');
+            } else {
+                $qstatus = $attemptobj->get_question_status($slot, $displayoptions->correctness);
+            }
+            if ($attemptobj->can_navigate_to($slot)) {
+                $row = array(html_writer::link($attemptobj->attempt_url($slot),
+                        $attemptobj->get_question_number($slot) . $flag),
+                        $attemptobj->get_question_status($slot, $qstatus));
+            } else {
+                $row = array($attemptobj->get_question_number($slot) . $flag,
+                                $attemptobj->get_question_status($slot, $qstatus));
+            }
+            /* /Corecode */
             if ($attemptobj->can_navigate_to($slot)) {
                 $row = array(html_writer::link($attemptobj->attempt_url($slot),
                         $attemptobj->get_question_number($slot) . $flag),

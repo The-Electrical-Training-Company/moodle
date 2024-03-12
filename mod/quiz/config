@@ -1,0 +1,29 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	symlinks = false
+	ignorecase = true
+[submodule]
+	active = .
+[remote "origin"]
+	url = https://github.com/The-Electrical-Training-Company/etcoquizchanges.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "main"]
+	remote = origin
+	merge = refs/heads/main
+[lfs]
+	repositoryformatversion = 0
+[branch "moodle39-og"]
+	remote = origin
+	merge = refs/heads/moodle39-og
+[branch "moodle41-og"]
+	remote = origin
+	merge = refs/heads/moodle41-og
+[branch "Shift-quiz-changes"]
+	remote = origin
+	merge = refs/heads/Shift-quiz-changes
+[branch "changes41"]
+	remote = origin
+	merge = refs/heads/changes41

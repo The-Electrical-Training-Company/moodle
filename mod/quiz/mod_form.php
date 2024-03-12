@@ -138,6 +138,12 @@ class mod_quiz_mod_form extends moodleform_mod {
             $mform->hideIf('grademethod', 'attempts', 'eq', 1);
         }
 
+        /* Corecode */
+        $mform->addElement('selectyesno', 'customgrading',    get_string('customgrading', 'quiz'));
+        $mform->addHelpButton('customgrading', 'customgrading', 'quiz');
+        $mform->setAdvanced('customgrading', $quizconfig->customgrading_adv);
+        $mform->setDefault('customgrading', $quizconfig->customgrading);
+        /* /Corecode */
         // -------------------------------------------------------------------------------
         $mform->addElement('header', 'layouthdr', get_string('layout', 'quiz'));
 
@@ -188,6 +194,29 @@ class mod_quiz_mod_form extends moodleform_mod {
                 $mform->hideIf('canredoquestions', 'preferredbehaviour', 'eq', $behaviour);
             }
         }
+        /* Corecode */
+        $mform->addElement('selectyesno', 'disablecorrect',    get_string('disablealreadycorrectquestions', 'quiz'));
+        $mform->addHelpButton('disablecorrect', 'disablealreadycorrectquestions', 'quiz');
+        $mform->setAdvanced('disablecorrect', $quizconfig->disablecorrect_adv);
+        $mform->setDefault('disablecorrect', $quizconfig->disablecorrect);
+
+        $mform->addElement('selectyesno', 'disablecorrect_showcorrect',    get_string('disablealreadycorrectquestions_showcorrect', 'quiz'));
+        $mform->addHelpButton('disablecorrect_showcorrect', 'disablealreadycorrectquestions_showcorrect', 'quiz');
+        $mform->setAdvanced('disablecorrect_showcorrect', $quizconfig->disablecorrect_showcorrect_adv);
+        $mform->setDefault('disablecorrect_showcorrect', $quizconfig->disablecorrect_showcorrect);
+
+        $mform->addElement('selectyesno', 'disableshowcorrectforstudent',    get_string('disableshowcorrectforstudent', 'quiz'));
+        $mform->addHelpButton('disableshowcorrectforstudent', 'disableshowcorrectforstudent', 'quiz');
+        $mform->setAdvanced('disableshowcorrectforstudent', $quizconfig->disableshowcorrectforstudent_adv);
+        $mform->setDefault('disableshowcorrectforstudent', $quizconfig->disableshowcorrectforstudent);
+
+        /* AC240304 */
+        $mform->addElement('selectyesno', 'disableshowcorrectforall',    get_string('disableshowcorrectforall', 'quiz'));
+        $mform->addHelpButton('disableshowcorrectforall', 'disableshowcorrectforall', 'quiz');
+        $mform->setAdvanced('disableshowcorrectforall', $quizconfig->disableshowcorrectforall_adv);
+        $mform->setDefault('disableshowcorrectforall', $quizconfig->disableshowcorrectforall);
+        /* /AC240304 */
+        /* /Corecode */
 
         // Each attempt builds on last.
         $mform->addElement('selectyesno', 'attemptonlast',

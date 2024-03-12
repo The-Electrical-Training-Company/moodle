@@ -22,6 +22,15 @@
     margin-left: auto;
 }
 
+/* Corecode */
+#page-mod-quiz-review .hidequestion .qtext {
+    display: none;
+}
+#page-mod-quiz-review [data-region="errormessagebox"] {
+    color: red;
+}
+/* /Corecode */
+
 .path-mod-quiz .mod_quiz-redo_question_button {
     margin: 0;
 }

@@ -116,6 +116,13 @@ if ($ADMIN->fulltree) {
     $setting->set_locked_flag_options(admin_setting_flag::ENABLED, false);
     $quizsettings->add($setting);
 
+    /* Corecode */
+    // Custom grading
+    $quizsettings->add(new admin_setting_configcheckbox_with_advanced('quiz/customgrading',
+        get_string('customgrading', 'quiz'), get_string('configcustomgrading', 'quiz'),
+        array('value' => 0, 'adv' => false)));
+    /* /Corecode */
+
     // Questions per page.
     $perpage = array();
     $perpage[0] = get_string('never');
@@ -161,6 +168,30 @@ if ($ADMIN->fulltree) {
     $setting->set_advanced_flag_options(admin_setting_flag::ENABLED, true);
     $setting->set_locked_flag_options(admin_setting_flag::ENABLED, false);
     $quizsettings->add($setting);
+
+    /* Corecode */
+    $quizsettings->add(new admin_setting_configcheckbox_with_advanced('quiz/disablecorrect',
+        get_string('disablealreadycorrectquestions', 'quiz'),
+        get_string('configdisablealreadycorrectquestions', 'quiz'),
+        array('value' => 0, 'adv' => true)));
+
+    $quizsettings->add(new admin_setting_configcheckbox_with_advanced('quiz/disablecorrect_showcorrect',
+        get_string('disablealreadycorrectquestions_showcorrect', 'quiz'),
+        get_string('configdisablealreadycorrectquestions_showcorrect', 'quiz'),
+        array('value' => 0, 'adv' => true)));
+
+    $quizsettings->add(new admin_setting_configcheckbox_with_advanced('quiz/disableshowcorrectforstudent',
+        get_string('disableshowcorrectforstudent', 'quiz'),
+        get_string('configdisableshowcorrectforstudent', 'quiz'),
+        array('value' => 0, 'adv' => true)));
+
+    /* AC240304 */
+    $quizsettings->add(new admin_setting_configcheckbox_with_advanced('quiz/disableshowcorrectforall',
+        get_string('disableshowcorrectforall', 'quiz'),
+        get_string('configdisableshowcorrectforall', 'quiz'),
+        array('value' => 0, 'adv' => true)));    
+    /* /AC240304 */    
+    /* /Corecode */
 
     // Each attempt builds on last.
     $setting = new admin_setting_configcheckbox('quiz/attemptonlast',

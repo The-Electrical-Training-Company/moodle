@@ -1,0 +1,3 @@
+[submodule "mod/quiz"]
+	path = mod/quiz
+	url = https://github.com/The-Electrical-Training-Company/etcoquizchanges.git

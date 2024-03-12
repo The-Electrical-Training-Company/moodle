@@ -93,6 +93,9 @@ class quiz {
     protected $accessmanager = null;
     /** @var bool whether the current user has capability mod/quiz:preview. */
     protected $ispreviewuser = null;
+    /* Corecode */
+    protected $lastattempt;
+    /* /Corecode */
 
     // Constructor =============================================================
     /**
@@ -1161,6 +1164,35 @@ class quiz_attempt {
                     // own preview irrespective of the review options settings.
                     $this->reviewoptions->attempt = true;
                 }
+                /* Corecode */
+                global $USER, $DB;
+                // Check for disableshowcorrectforstudent 
+                if ($this->disableshowcorrectforstudent()){
+                    // Check if student
+                    $courseid = $this->get_courseid();
+                    $userid = $USER->id;
+                    $studentrole = 5;
+                    $sql = "
+                        SELECT *
+                        FROM {context} c
+                        LEFT JOIN {role_assignments} ra ON ra.contextid = c.id
+                        WHERE c.contextlevel = ? AND c.instanceid = ? AND ra.userid = ? AND ra.roleid = ?";
+                    $sqlParams = [CONTEXT_COURSE, $courseid, $userid, $studentrole];
+                    // Store origional value for hacks
+                    $this->reviewoptions->truecorrectness = $this->reviewoptions->correctness;
+                    // If student disable showcorrect
+                    if ($DB->record_exists_sql($sql, $sqlParams)){
+                        $this->reviewoptions->correctness = false;
+                    }
+                    
+                } /* AC24030040 */else if ($this->disableshowcorrectforall()) {
+                    // Store origional value for hacks
+                    $this->reviewoptions->truecorrectness = $this->reviewoptions->correctness;
+                    // disable showcorrect
+                    $this->reviewoptions->correctness = false;
+                }
+                /* /AC240304 */ 
+                /* /Corecode */
             }
             return $this->reviewoptions;
 
@@ -1426,6 +1458,14 @@ class quiz_attempt {
      *      by the quiz.
      */
     public function get_question_status($slot, $showcorrectness) {
+        /* Corecode */
+        if ($this->disablecorrect()) {
+            $qattempt = $this->get_last_complete_attempt();
+            if ($qattempt[$slot]->correct) {
+                return get_string('previouslycompleted', 'quiz');
+            }
+        }
+        /* /Corecode */
         return $this->quba->get_question_state_string($slot, $showcorrectness);
     }
 
@@ -1779,6 +1819,49 @@ class quiz_attempt {
             }
         }
 
+        /* Corecode */
+        $userattempts = quiz_get_user_attempts($this->get_quiz()->id, $this->attempt->userid, 'finished');
+
+        if (!empty($this->quizobj->get_quiz()->disablecorrect) && $this->get_attempt_number() > 1) {
+            $qattempt = $this->get_last_complete_attempt();
+            $outOfOrder = $qattempt[$slot]->timecreated > $this->get_submitted_date() && $reviewing;
+            if ($qattempt[$slot]->correct && !$outOfOrder) {
+                $displayoptions->passed_question = false;
+                $displayoptions->passed = $qattempt[$slot]->correct;
+
+                // The settings have asked us to deploy the prev completed attempt question
+                if (!empty($this->quizobj->get_quiz()->disablecorrect_showcorrect)){
+                    foreach ($userattempts as $key => $userattempt) {
+                        $oldqattempt = new quiz_attempt($userattempt, $this->quizobj->get_quiz(), $this->get_cm(), $this->get_course());
+                        if (!$displayoptions->passed_question && ($oldqattempt->quba->get_question_state($slot) == question_state::$gradedright || $oldqattempt->quba->get_question_state($slot) == question_state::$mangrright)) {
+                            $displayoptions->passed_question = $oldqattempt->quba->get_question_attempt($slot);
+                        }
+                    }
+                }
+            }
+        }
+        $displayoptions->viewprevanswers = 0;
+        if ($this->customgrading() && !isset($displayoptions->passed)) {
+            $displayoptions->viewcustomgrading = 1;
+            $displayoptions->quizattemptid = $this->get_attemptid();
+            if ($this->get_attempt_number() > 1) {
+                $qdata = array();
+                $prevoutput = array();
+                $displayoptions->displayAnswerOnly = true;
+
+                // Remove the most recent attempt as this is for custom grade they already see it
+                array_pop($userattempts);
+                foreach ($userattempts as $key => $userattempt) {
+                        $qattempt = new quiz_attempt($userattempt, $this->quizobj->get_quiz(), $this->get_cm(), $this->get_course());
+                        $prevoutput[] = $qattempt->quba->render_question($slot, $displayoptions, $number);
+                }
+                $displayoptions->displayAnswerOnly = false;
+                $displayoptions->viewprevanswers = 1;
+                $displayoptions->prevanswers = $prevoutput;
+            }
+        }
+        /* /Corecode */
+
         if ($seq === null) {
             $output = $this->quba->render_question($slot, $displayoptions, $number);
         } else {
@@ -1791,6 +1874,32 @@ class quiz_attempt {
 
         return $output;
     }
+
+    /* Corecode */
+    public function manual_grade_question($slot, $comment, $mark, $commentformat = null) {
+        global $DB;
+        $this->quba->manual_grade($slot, $comment, $mark, $commentformat);
+        question_engine::save_questions_usage_by_activity($this->quba);
+
+        $transaction = $DB->start_delegated_transaction();
+        $this->process_submitted_actions(time());
+        $transaction->allow_commit();
+
+        $params = array(
+            'objectid' => $this->get_question_attempt($slot)->get_question()->id,
+            'courseid' => $this->get_courseid(),
+            'context' => context_module::instance($this->get_cmid()),
+            'other' => array(
+                'quizid' => $this->get_quizid(),
+                'attemptid' => $this->get_attemptid(),
+                'slot' => $slot
+            )
+        );
+
+        $event = \mod_quiz\event\question_manually_graded::create($params);
+        $event->trigger();
+    }
+    /* /Corecode */
 
     /**
      * Create a fake question to be displayed in place of a question that is blocked
@@ -2223,6 +2332,16 @@ class quiz_attempt {
             $this->get_access_manager($timestamp)->current_attempt_finished();
         }
 
+        /* Corecode */
+        if ($this->disablecorrect()) {
+            $qattempt = $this->get_last_complete_attempt();
+            foreach ($this->get_slots('all') as $slot) {
+                if ($qattempt[$slot]->correct) {
+                    $this->manual_grade_question($slot, 'correct in prev attempt', $qattempt[$slot]->maxMark, 1);
+                }
+            }
+        }
+        /* /Corecode */
         $transaction->allow_commit();
     }
 
@@ -2309,6 +2428,58 @@ class quiz_attempt {
         $event->add_record_snapshot('quiz_attempts', $this->get_attempt());
         $event->trigger();
     }
+
+    /* Corecode */
+    public function customgrading() {
+        return (!empty($this->quizobj->get_quiz()->customgrading) &&  has_capability('mod/quiz:grade', $this->get_quizobj()->get_context()));
+    }
+
+    public function disablecorrect() {
+        return (!empty($this->quizobj->get_quiz()->disablecorrect) && $this->get_attempt_number() > 1);
+    }
+
+    public function disableshowcorrectforstudent() {
+        return (!empty($this->quizobj->get_quiz()->disableshowcorrectforstudent));
+    }
+
+    /* AC240304 */
+    public function disableshowcorrectforall() {
+        return (!empty($this->quizobj->get_quiz()->disableshowcorrectforall));
+    }
+    /* /AC240304 */
+
+    public function get_last_complete_attempt() {
+        if ($this->disablecorrect()) {
+            $qdata = array();
+            $userattempts = array();
+            foreach (quiz_get_user_attempts($this->get_quiz()->id, $this->attempt->userid, 'finished') as $key => $value) {
+                $userattempts[$value->attempt] = $value;
+            }
+
+            if ($this->attempt->attempt > 1){
+                $attempt = $userattempts[(int) $this->attempt->attempt - 1];
+            }
+
+            if (!empty($attempt)) {
+                $qattempt = new quiz_attempt($attempt, $this->quizobj->get_quiz(), $this->get_cm(), $this->get_course());
+                $slots = $qattempt->get_slots('all');
+                foreach ($slots as $slot) {
+                    $qdata[$slot] = new \stdClass();
+                    $qdata[$slot]->correct = false;
+                    $qdata[$slot]->state = $qattempt->quba->get_question_state($slot);
+                    $qdata[$slot]->timecreated = $qattempt->get_question_attempt($slot)->get_last_step()->get_timecreated();
+                    if ($qattempt->quba->get_question_state($slot) == question_state::$gradedright || $qattempt->quba->get_question_state($slot) == question_state::$mangrright) {
+                        $qdata[$slot]->correct = true;
+                        $qdata[$slot]->maxMark = $qattempt->quba->get_question_max_mark($slot);
+                    }
+                }
+            }
+            return $qdata;
+        } else {
+            return array();
+        }
+    }
+    /* /Corecode */
 
     // Private methods =========================================================
 
@@ -2822,6 +2993,11 @@ abstract class quiz_nav_panel_base {
      */
     public function get_question_buttons() {
         $buttons = array();
+        /* Corecode */
+        if ($this->attemptobj->disablecorrect()) {
+            $qattempt = $this->attemptobj->get_last_complete_attempt();
+        }
+        /* /Corecode */
         foreach ($this->attemptobj->get_slots() as $slot) {
             $heading = $this->attemptobj->get_heading_before_slot($slot);
             if (!is_null($heading)) {
@@ -2833,6 +3009,15 @@ abstract class quiz_nav_panel_base {
 
             $qa = $this->attemptobj->get_question_attempt($slot);
             $showcorrectness = $this->options->correctness && $qa->has_marks();
+
+            /* Corecode */
+            // We actually want the nav to to show correctness
+            // So we preserve the old value here
+            if ($this->attemptobj->disableshowcorrectforstudent()
+                /* AC24030040 */|| $this->attemptobj->disableshowcorrectforall() /* /AC24030040 */) {
+                $showcorrectness = ($this->options->correctness || $this->options->truecorrectness) && $qa->has_marks();
+            }
+            /* /Corecode */
 
             $button = new quiz_nav_question_button();
             $button->id          = 'quiznavbutton' . $slot;
@@ -2852,6 +3037,13 @@ abstract class quiz_nav_panel_base {
                 $button->stateclass = 'blocked';
                 $button->statestring = get_string('questiondependsonprevious', 'quiz');
             }
+            /* Corecode */
+            if ($this->attemptobj->disablecorrect()) {
+                if ($qattempt[$slot]->correct) {
+                    $button->stateclass = 'correct';
+                }
+            }
+            /* /Corecode */
             $buttons[] = $button;
         }
 

@@ -163,5 +163,54 @@ function xmldb_quiz_upgrade($oldversion) {
     // Automatically generated Moodle v4.1.0 release upgrade line.
     // Put any upgrade step following this.
 
+    /* Corecode */
+    if ($oldversion < 2022112800.01) {
+        $table = new xmldb_table('quiz');
+        $field = new xmldb_field('customgrading', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0', 'attemptonlast');
+
+        // Conditionally launch add field customgrading.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field disablecorrect to be added to quiz.
+        $field = new xmldb_field('disablecorrect', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0', 'attempts');
+
+        // Conditionally launch add field disablecorrect.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field disablecorrect_showcorrect to be added to quiz.
+        $field = new xmldb_field('disablecorrect_showcorrect', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0', 'attempts');
+
+        // Conditionally launch add field disablecorrect_showcorrect.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field disableshowcorrectforstudent to be added to quiz.
+        $field = new xmldb_field('disableshowcorrectforstudent', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0', 'attempts');
+
+        // Conditionally launch add field disableshowcorrectforstudent.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        /* AC240304 */
+        // Define field disableshowcorrectforall to be added to quiz.
+        $field = new xmldb_field('disableshowcorrectforall', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0', 'attempts');
+
+        // Conditionally launch add field disableshowcorrectforall.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        /* /AC240304 */
+        
+        // Quiz savepoint reached.
+        upgrade_mod_savepoint(true, 2022112800.01, 'quiz');
+    }
+    /* /Corecode */
+
     return true;
 }
